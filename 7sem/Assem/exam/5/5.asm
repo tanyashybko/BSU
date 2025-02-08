@@ -1,0 +1,35 @@
+.MODEL TINY
+.STACK 100h
+.CODE
+.STARTUP
+    ORG 100H
+    XOR AX, AX
+    INT 16H
+    SUB AL, '0'
+    MOV BL, AL
+    MUL AL
+
+    MOV AH, AL
+    MOV AL, BL
+    MUL AH
+
+    MOV BX, 10
+    MOV CX, 0
+
+PRINT_SYMBOL:
+    XOR DX, DX
+    DIV BX
+    ADD DL, '0'
+    PUSH DX
+    INC CX
+    TEST AL, AL
+    JNZ PRINT_SYMBOL
+
+PRINT_RESULT:
+    POP DX
+    MOV AH, 02h
+    INT 21h
+    LOOP PRINT_RESULT
+    MOV AH, 4Ch
+    INT 21H
+END

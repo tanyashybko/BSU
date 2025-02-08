@@ -1,0 +1,31 @@
+.MODEL TINY
+.CODE
+.STARTUP
+ORG 100H
+    XOR AX, AX
+    INT 16H
+    SUB AL, '0'
+    CMP AL, 5
+    JGE SQUARE
+    MOV BL, AL
+    MOV AX, 1
+    SHL AL, 2
+    MUL BL
+    JMP PRINT
+
+SQUARE:
+    MUL AL
+
+PRINT:
+    MOV BX, 10
+PRINT_LOOP:
+    XOR DX, DX
+    DIV BX
+    ADD DL, '0'
+    INT 29H
+    TEST AX, AX
+    JNZ PRINT_LOOP
+
+    MOV AH, 4CH
+    INT 21H
+END

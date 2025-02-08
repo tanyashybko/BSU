@@ -1,0 +1,77 @@
+.MODEL TINY
+.DATA
+  FILE_NAME DB 256 DUP(?)
+.CODE
+ORG 100H
+
+START:
+  MOV BX, OFFSET FILE_NAME
+  CALL COPY_FILE_NAME
+  MOV DX, OFFSET FILE_NAME
+  CALL OPEN_FILE
+  MOV AX, BX       
+  MOV BX, 10      
+
+  MOV CX, 0        
+  MOV DX, 0        
+  
+ConversionLoop:
+      MOV DX, 0    
+    DIV BX          
+      ADD DX, 30h     
+
+      PUSH DX         
+      INC CX          
+
+  TEST AX, AX     
+      JNZ ConversionLoop
+
+PrintLoop:
+      POP DX          
+
+      MOV AH, 02h     
+      MOV DL, DL      
+      INT 21h
+
+  LOOP PrintLoop  
+
+  MOV AH, 4Ch
+  INT 21h
+  
+COPY_FILE_NAME PROC NEAR ; DS:BX - WHERE TO COPY FILE NAME
+  PUSH ES
+  MOV AX,ES:[2CH]
+  MOV ES,AX
+  MOV SI,-1
+  
+SEARCH_01:
+  INC SI
+  MOV AL,ES:[SI]
+  CMP AL,0
+  JNE SEARCH_01
+  MOV AL,ES:[SI+1]
+  CMP AL,1
+  JNE SEARCH_01
+  
+  ADD SI,2
+  
+COPY_NAME:
+  INC SI
+  MOV AL,ES:[SI]
+  MOV [BX],AL
+  INC BX
+  CMP AL,0
+  JNE COPY_NAME
+  
+  POP ES
+  RET
+COPY_FILE_NAME ENDP
+
+OPEN_FILE PROC NEAR ; DS:DX - FILE NAME, BX - RESULT (FILE HANDLE)
+  MOV AX,3D02H
+  INT 21H
+  MOV BX,AX
+  RET
+OPEN_FILE ENDP
+
+END START

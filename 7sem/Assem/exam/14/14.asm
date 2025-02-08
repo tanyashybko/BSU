@@ -1,0 +1,149 @@
+.MODEL SMALL
+.DATA
+    PROGRAM_NAME DB 256 DUP(?)
+    ENTER_PASSWORD DB 'Enter password:',10,13,'$'
+    ENTERED_PASSWORD DB 11,12 DUP(?)
+    CORRECT_PASSWORD DB 'Correct password!',10,13,'$'
+    GOODBYE DB 'Self-destruction!',10,13,'$'
+    ATTEMPTS DB 3
+    ATTEMPTS_LEFT DB 'Attempts left: $'
+    OUT_OF_ATTEMPTS_MSG DB 'You are out of attempts!',10,13,'$'
+.CODE
+    PASSWORD DB 'PASSWORD'
+    PASSWORD_LENGTH EQU $-PASSWORD
+
+WRITE_ATTEMPTS PROC
+    MOV DX, OFFSET PROGRAM_NAME
+    MOV AX, 4300H
+    INT 21H
+    MOV AX, 4301H
+    AND CX, 11111110B
+    INT 21H
+    MOV AX, 3D02H
+    INT 21H
+    MOV BX, AX
+    MOV CX, 0
+    MOV DX, 0
+    MOV AX, 4202H
+    INT 21H
+    MOV CX, 0
+    SUB AX, 17
+    MOV DX, AX
+    MOV AX, 4200H
+    INT 21H
+    MOV DX, OFFSET ATTEMPTS
+    MOV CX, 1
+    MOV AH, 40H
+    INT 21H
+    MOV AH, 3EH
+    INT 21H
+    RET
+WRITE_ATTEMPTS ENDP
+
+PRINT_CORRECT_PASSWORD:
+    MOV DX, OFFSET CORRECT_PASSWORD
+    MOV AH, 09H
+    INT 21H
+    RET
+
+PRINT_10_SYMBOL_LINE:
+    CALL PRINT_CORRECT_PASSWORD ; Вывести "Correct Password!"
+    JMP EXIT_PROGRAM ; Перейти к выходу из программы
+
+EXIT_PROGRAM:
+    MOV AX, 4C00H
+    INT 21H
+
+START:
+    MOV AX, @DATA
+    MOV DS, AX
+    MOV AX, ES:[2CH]
+    MOV ES, AX
+    MOV SI, -1
+
+SEARCH_01:
+    ADD SI, 1
+    MOV AL, ES:[SI]
+    CMP AL, 0
+    JNE SEARCH_01
+    MOV AL, ES:[SI+1]
+    CMP AL, 1
+    JNE SEARCH_01
+    ADD SI, 2
+    MOV BX, OFFSET PROGRAM_NAME
+
+COPY_NAME:
+    ADD SI, 1
+    MOV AL, ES:[SI]
+    MOV [BX], AL
+    INC BX
+    CMP AL, 0
+    JNE COPY_NAME
+
+CHECK_PASSWORD:
+    MOV DX, OFFSET ATTEMPTS_LEFT
+    MOV AH, 09H
+    INT 21H
+    MOV AL, ATTEMPTS
+    ADD AL, 30H
+    INT 29H
+    MOV AL, 10
+    INT 29H
+    MOV AL, 13
+    INT 29H
+    MOV DX, OFFSET ENTER_PASSWORD
+    MOV AH, 09H
+    INT 21H
+    MOV DX, OFFSET ENTERED_PASSWORD
+    MOV AH, 0AH
+    INT 21H
+    MOV AL, 10
+    INT 29H
+    MOV AL, 13
+    INT 29H
+    MOV BX, OFFSET ENTERED_PASSWORD
+    MOV AL, [BX+1]
+    XOR AH, AH
+    MOV BX, PASSWORD_LENGTH
+    CMP AX, BX
+    JNE WRONG_PASSWORD
+
+    MOV CX, AX
+    MOV SI, OFFSET PASSWORD
+    MOV DI, OFFSET ENTERED_PASSWORD
+    ADD DI, 2
+
+COMPARE_PASSWORDS:
+    MOV AL, CS:[SI]
+    MOV AH, [DI]
+    CMP AL, AH
+    JNE WRONG_PASSWORD
+    INC SI
+    INC DI
+    LOOP COMPARE_PASSWORDS
+
+    ; Строки для вывода "Correct password!"
+    MOV DX, OFFSET CORRECT_PASSWORD
+    MOV AH, 09H
+    INT 21H
+
+    MOV ATTEMPTS, 3
+    JMP EXIT_PROGRAM ; Перейти к выходу из программы
+
+WRONG_PASSWORD:
+    MOV AL, ATTEMPTS
+    DEC AL
+    CMP AL, 0
+    JE OUT_OF_ATTEMPTS ; Если попытки кончились, перейти к сообщению и выходу
+
+    MOV ATTEMPTS, AL
+    CALL WRITE_ATTEMPTS
+    JMP CHECK_PASSWORD
+
+OUT_OF_ATTEMPTS:
+    MOV DX, OFFSET OUT_OF_ATTEMPTS_MSG
+    MOV AH, 09H
+    INT 21H
+    JMP EXIT_PROGRAM ; Перейти к выходу из программы
+END START
+

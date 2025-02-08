@@ -1,0 +1,3 @@
+fc /b 16.exe 16_backup.exe - проверка изменений
+copy 16.exe 16_backup.exe
+

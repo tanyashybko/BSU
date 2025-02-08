@@ -1,0 +1,131 @@
+extrn MessageBoxA: PROC
+extrn ExitProcess:PROC
+extrn CreateThread:PROC
+extrn FindWindowA:PROC
+extrn MoveWindow:PROC
+extrn Sleep:PROC
+
+.data
+caption             db '64-bit hello!', 0
+message             db 'Hello World!', 0
+HWINDOW        dword   ?
+SLEEP_DURATION     dword   10 
+CURRENT_X         dword   450
+CURRENT_Y         dword   350
+new_x              dword   0
+new_y              dword   0
+MSGBOX_WIDTH       dword   133               
+MSGBOX_HEIGHT      dword   140               
+MAX_X         dword   1250              
+MAX_Y         dword  600
+TWENTY             dword   500
+const_X       dword   1000
+const_Y       dword   600
+min_sleep      dword  100
+max_sleep      dword  1000
+range_sleep    dword  900
+
+.code
+Start proc
+
+sub RSP,28h ; shadow space, aligns stack
+mov RCX, 0 ; hWnd = HWND_DESKTOP
+lea RDX, message ; LPCSTR lpText
+lea R8, caption ; LPCSTR lpCaption
+mov R9D, 0 ; uType = MB_OK
+call MessageBoxA ; call MessageBox API function
+add RSP,28h
+
+; wait on Ok pressed by user
+
+;CreateThread(0,0,Thread_Func, 0, 0, 0)
+mov RCX, 0           
+mov RDX, 0           
+mov R8,  Move 
+mov R9,  0           
+sub RSP, 12          
+mov qword ptr [RSP], 0     
+mov dword ptr [RSP + 8], 0 
+call CreateThread
+add RSP, 12
+
+;change message
+sub RSP, 28h
+mov message+6, 'h'
+mov message+7, 'e'
+mov message+8, 'l'
+mov message+9, 'l'
+mov message+10, '!'
+mov caption+11, '!'
+mov RCX, 0 
+lea RDX, message
+lea R8, caption
+mov R9D, 0 
+call MessageBoxA
+add RSP,28h
+
+Start endp
+
+Move proc
+
+;Find_WIndow(0,caption) return handler in EAX
+FIND:
+    mov  RCX, 0              
+    lea  RDX, [caption] 
+    call FindWindowA    
+    cmp  RAX, 0
+    je FIND
+
+  mov [HWINDOW], EAX
+
+new_coord:
+  mov edx, 0
+  rdrand AX
+  div const_X
+  mov eax, edx
+  mov new_x , eax
+  
+  mov edx, 0
+  rdrand AX   
+  div const_Y
+  mov eax, edx
+  mov new_y, eax
+  
+  ; Генерация нового времени сна
+  mov edx, 0
+  rdrand AX
+  div range_sleep
+  mov eax, edx
+  add eax, min_sleep
+  mov SLEEP_DURATION, eax
+
+    ;Sleep(SLEEP_DURATION)
+    mov ECX, [SLEEP_DURATION]
+    call Sleep
+  
+    mov EAX, new_x
+    mov CURRENT_X, EAX
+
+    mov EAX, new_y
+    mov CURRENT_Y, EAX
+
+    ;MoveWindow(HWINDOW,Current_x,Current_Y,MSGBOX_Width, MSGBOX_Height, 1)
+    mov ECX, [HWINDOW]
+    mov EDX, CURRENT_X
+    mov R8D, CURRENT_Y
+    mov R9D, [MSGBOX_WIDTH]
+    mov EAX, [MSGBOX_HEIGHT]
+    mov dword ptr [RSP+20h], EAX
+    mov dword ptr [RSP+28h], 1
+    call MoveWindow
+
+    cmp EAX, 0
+    jne new_coord
+
+  mov RCX, 0   
+  jmp exit_p
+
+exit_p:
+  call ExitProcess
+Move endp
+End
