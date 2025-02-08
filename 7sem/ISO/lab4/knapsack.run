@@ -1,0 +1,6 @@
+reset;
+model knapsack.mod;
+data knapsack.dat;
+option solver cbc;
+solve;
+display x;

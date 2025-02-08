@@ -1,0 +1,7 @@
+set COMPONENTS := BUTTER MEAT BREAD JUICE;
+
+param: calories protein fats carbs cholesterol price :=
+    BUTTER 800 0.6 0.02 0 0.0015 50
+    MEAT 280 15 0.05 0 0.0008 400
+    BREAD 245 8 0 5 0 25
+    JUICE 80 0 0 10 0 50;

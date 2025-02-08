@@ -1,0 +1,11 @@
+reset;
+
+model var25.mod;
+data var25.dat;
+
+option solver cplex;
+
+solve;
+
+display total_price;
+display weights;

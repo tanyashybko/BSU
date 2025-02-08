@@ -1,0 +1,14 @@
+reset;
+
+model model.mod;
+data model.dat;
+
+option solver cplex;
+
+solve;
+display total_time;
+display {w in WORKERS, j in JOBS} time[w,j];
+
+solve total_time_squared;
+display total_time_squared;
+display {w in WORKERS, j in JOBS} time[w,j];
